@@ -36,7 +36,14 @@ body {
   padding: 0;
   -webkit-font-smoothing: subpixel-antialiased;
 }
-
+.center{
+    position: absolute;
+	top:0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: auto;
+}
 html {
   font-family: sans-serif;
   font-size: 100%;
@@ -8002,8 +8009,8 @@ a.fbtn:focus, a.fbtn:hover {
 
 .fbtn-container {
   position: fixed;
-  right: 16px;
-  bottom: 12px;
+  top:1vh;
+  left:1vh;
   z-index: 21;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
@@ -11304,6 +11311,10 @@ input[type="checkbox"]:checked + .switch-toggle:after, input[type="radio"]:check
 
 .content {
   padding-bottom: 24px;
+  height:100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .searching .content {
   display: none;

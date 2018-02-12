@@ -40,9 +40,9 @@ connection.onstream = function(event) {
 
     event.mediaElement.removeAttribute('src');
     event.mediaElement.removeAttribute('srcObject');
-	console.log(event.streamid);
+	
 	if(sourcevideo){
-		console.log("Remote Stream Started.");
+		var rmDetails = getRoomDetails(document.getElementById('room-id').value);
 		$("#entryContent").remove();
 		connection.videosContainer = document.getElementById('bigVideo');
 		
@@ -54,7 +54,7 @@ connection.onstream = function(event) {
 		
 		var width = parseInt(connection.videosContainer.clientWidth / 2) - 20;
 		var mediaElement = getHTMLMediaElement(video, {
-			title: 'HR',
+			title: roomid != 0 ? "Conference - "+ roomid : "Waiting",
 			buttons: [''],
 			width: width,
 			showOnMouseEnter: false
@@ -69,7 +69,6 @@ connection.onstream = function(event) {
 		
 		$("#disconnect").removeClass("hide");
 	}else{
-		console.log(2);
 		var video = document.createElement('video');
 		video.id = "Sourcevideo"
 		video.controls = true;
@@ -138,22 +137,16 @@ connection.onMediaError = function(e) {
 
 
 
-function getRoomId(){
-	var url = baseUrl+"getRoomId"
-	var result = {};
-	$.ajax({
-		async: false,
-		type: "POST",
-		url: url,
-		complete: function (jqxhr, txt_status) {
-			result = jqxhr;
-		}
-	});
 
-	if (result.responseText)
-		return result.responseText;
+function disableInputButtons() {
+}
 
-	return "";
+// ......................................................
+// ......................Handling Room-ID................
+// ......................................................
+
+function showRoomURL(roomid) {
+
 }
 
 (function() {
@@ -170,31 +163,39 @@ function getRoomId(){
 })();
 
 
-function disableInputButtons() {
-  
+var roomid = params.roomid;
+document.getElementById('room-id').value = roomid;
+
+console.log(roomid);
+
+if (roomid && roomid.length) {
+    document.getElementById('room-id').value = roomid;
+    localStorage.setItem(connection.socketMessageEvent, roomid);
+
+    // auto-join-room
+    (function reCheckRoomPresence() {
+        connection.checkPresence(roomid, function(isRoomExist) {
+            if (isRoomExist) {
+                connection.join(roomid);
+                return;
+            }
+
+            setTimeout(reCheckRoomPresence, 5000);
+        });
+    })();
+
+    disableInputButtons();
 }
 
-// ......................................................
-// ......................Handling Room-ID................
-// ......................................................
-
-function showRoomURL(roomid) {
-   
-}
-
-
-function openRoom(roomid){
-	
-	var data = {"rID": roomid,"firstname": params.fname,"lastname": "","storeNumber": 100,"timestamp": "","status": "Open","attendedBy": ""};
-	
-	var url = baseUrl+"insertVideoConf"
+function connectRoom(){
+	var url = baseUrl+"/updateVideoConf"
 	var result = {};
 	$.ajax({
 		async: false,
 		type: "POST",
 		url: url,
-		data: JSON.stringify(data),
 		contentType: "application/json",
+		data: JSON.stringify({"rID": roomid,"firstname": params.fname,"lastname": "","storenumber": 100,"timestamp": "","status": "Connected","attendedBy": localStorage.getItem("username")}),
 		complete: function (jqxhr, txt_status) {
 			result = jqxhr;
 		}
@@ -206,6 +207,7 @@ function openRoom(roomid){
 	return "";
 }
 
+
 function disconnectRoom(){
 	var url = baseUrl+"updateVideoConf"
 	var result = {};
@@ -214,7 +216,7 @@ function disconnectRoom(){
 		type: "POST",
 		url: url,
 		contentType: "application/json",
-		data: JSON.stringify({"rID": window.roomuid,"firstname": params.fname,"lastname": "","storenumber": 100,"timestamp": "","status": "Abandoned","attendedBy": ""}),
+		data: JSON.stringify({"rID": roomid,"firstname": params.fname,"lastname": "","storenumber": 100,"timestamp": "","status": "Closed","attendedBy": ""}),
 		complete: function (jqxhr, txt_status) {
 			result = jqxhr;
 		}
@@ -239,16 +241,31 @@ function disconnectConnection(isReceiver){
 	}
 }
 
+function getRoomDetails(roomid){
+	var url = baseUrl+"videoConfById?rID="+roomid
+	var result = {};
+	$.ajax({
+		async: false,
+		type: "POST",
+		url: url,
+		complete: function (jqxhr, txt_status) {
+			result = jqxhr;
+		}
+	});
 
+	if (result.responseText)
+		return result.responseText;
+
+	return "";
+}
 
 $(document).ready(function(){
-        
-		$("#sourceDiv").removeClass("hide");
-		var roomid = getRoomId();
-		window.roomuid = roomid
-		openRoom(roomid);
-        connection.open(roomid, function() {
-			showRoomURL(connection.sessionid);
+		connectRoom();
+        $("#sourceDiv").removeClass("hide");
+         connection.join(roomid, function(isRoomExist, roomid) {
+			if (!isRoomExist) {
+				showRoomURL(roomid);
+			}
 		});
         $("#remoteDiv").removeClass("hide");
 		

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <title>HR - Video Call</title>
+    <meta charset="UTF-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="initial-scale=1.0, width=device-width" name="viewport">
+    
+    <link rel="icon" type="image/x-icon" href="images/wally-chatbot-logo.png">
+
+    <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.1.117/styles/kendo.common-material.min.css" />
+    <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.1.117/styles/kendo.default.min.css" />
+    <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.1.117/styles/kendo.mobile.all.min.css" />
+
+    <!-- css -->
+    <link href="css/base.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <!-- favicon -->
+    <!-- ... -->
+    <!-- ie -->
+    <!--[if lt IE 9]>
+        <script src="js/html5shiv.js" type="text/javascript"></script>
+        <script src="js/respond.js" type="text/javascript"></script>
+    <![endif]-->
+</head>
+
+<body class="avoid-fout page-blue">
+    <div data-model="viewModel" data-role="view" data-title="Video Conference" data-use-native-scrolling="true" class="default"
+        data-init="initForm">
+        <div class="content">
+            <div class="content-inner">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-sm-3">
+
+                        </div>
+                        <div class="col-sm-6">
+                            <h2 class="content-sub-heading">Welcome to Video Conference</h2>
+
+                            <form>
+                                <input id="username" type="text" class="k-textbox" data-bind="value: username, attr" placeholder="Enter your Name" style="width: 50%;"
+                                />
+                                <a data-role="button" data-animated="true" data-bind="events: { click: login }" id="loginBtn" data-icon="action" class="km-primary">Enter</a>
+                            </form>
+                        </div>
+                        <div class="col-sm-3"></div>
+                    </div>
+                    <div class="row" data-bind="style :{ visibility: isVisible }">
+                        <div class="col-sm-10">
+                            <strong style="color:brown;padding-left:15px;">Hi
+                                <span data-bind="text: username"></span>!</strong>
+                            <a data-role="button" data-animated="true" data-bind="events: { click: refresh }" data-icon="refresh" class="km-primary pull-right"></a>
+                            <br/><br/>
+                            <ul id="custom-listview"></ul>
+                        </div>
+<!--
+                        <div class="col-sm-7" id="conference" style="background-color: #363636;overflow:hidden;min-height: 90vh;border-radius: 2vh;">
+                            <div class="col-sm-12">
+                                <div class="center" style="margin: 0 auto;text-align:center">
+                                    <img src="images/hricon.png" style="width:50vh" />
+                                </div>
+                                <div class="row">
+                                    <div class="spinner">
+                                        <label class="text-white" style="font-size:4vh" id="label">Waiting</label>
+                                        <div class="bounce1"></div>
+                                        <div class="bounce2"></div>
+                                        <div class="bounce3"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/x-kendo-template" id="customListViewTemplate">
+    # if (status == "Open"){ #
+    <a data-role="button" onclick="connect(${rID},'${firstname}') " class="call km-button-right km-icon-button"><img src="images/calling.gif" style="width:5vh">Calling</a>
+   # if ($("\#username").val() == "Dhana"){ # 
+   <a data-role="button" onclick=" disconnect(${rID},'${firstname}') " class=" km-button-right km-icon-button"><span class="icon icon-call-end"></span> End</a>
+    # }#
+    # } 
+    var colorArray = ['brown', 'blue', 'green','orange','red','purple','indigo','lightblue','blueviolet','chocolate']; 
+    var bgColor = colorArray[Math.floor(Math.random() * colorArray.length)];
+    var base64Data = placeholder.getBase64Data({
+        height:50,
+        width:50,
+        bgColor:bgColor,
+        text:firstname.substring(0,1),
+        fontSize:20
+    }); #
+    <img class="km-thumbnail" src="${base64Data}" />
+    <h4 class="km-bold">${firstname} ${lastname}</h4>
+    <p class="job-title"><i>Store:</i> ${storeNumber}- <i>Time:</i> ${Unix_timestamp(timestamp)} Hrs <br/>
+    <i>Conference room: </i> ${rID}
+    </p>
+</script>
+<style>
+    .km-nova .call .km-button {
+        background: #fff;
+        border-color: rgba(255,255,255,.2);
+    }
+</style>
+<script src="js/base.min.js" type="text/javascript"></script>
+<script src="https://kendo.cdn.telerik.com/2018.1.117/js/kendo.all.min.js"></script>
+<script src="js/image-placeholder.min.js"></script>
+
+<script>
+    var baseUrl = "https://13.78.183.109:8443/ServicePoc/";
+
+    function connect(rID, fname){
+        var url = baseUrl + "updateVideoConf"
+        var result = {};
+        $.ajax({
+            async: false,
+            type: "POST",
+            url: url,
+            contentType: "application/json",
+            data: JSON.stringify({ "rID": rID, "firstname": fname, "lastname": "", "storenumber": 100, "timestamp": "", "status": "Connected", "attendedBy": $("#username").val()}),
+            complete: function (jqxhr, txt_status) {
+                result = jqxhr;
+            }
+        });
+
+        if (result.responseText) {
+            window.location = '/demos/connect.html?roomid='+rID+'&fname='+fname;
+        }
+    }
+
+    function disconnect(rID, fname) {
+        var url = baseUrl + "updateVideoConf"
+        var result = {};
+        $.ajax({
+            async: false,
+            type: "POST",
+            url: url,
+            contentType: "application/json",
+            data: JSON.stringify({ "rID": rID, "firstname": fname, "lastname": "", "storenumber": 100, "timestamp": "", "status": "Abandoned", "attendedBy": "" }),
+            complete: function (jqxhr, txt_status) {
+                result = jqxhr;
+            }
+        });
+
+        if (result.responseText) {
+
+        }
+    }
+
+    function Unix_timestamp(t) {
+        var dt = new Date(t * 1000);
+        var hr = dt.getHours();
+        var m = "0" + dt.getMinutes();
+        var s = "0" + dt.getSeconds();
+        return hr + ':' + m.substr(-2) + ':' + s.substr(-2);
+    }
+
+    function reload() {
+        var data = getData("videoConf");
+        if (typeof data == "string") {
+            try {
+                data = $.parseJSON(data);
+            } catch (e) { console.log(e); }
+        }
+
+        var dataSource = new kendo.data.DataSource({
+            data: data,
+            filter: {
+                logic: "or",
+                filters: [
+                    { field: "status", operator: "eq", value: "Open" },
+                    { field: "status", operator: "eq", value: "Connected" }
+                ]
+            },
+            group: "status"
+        });
+        $("#custom-listview").data("kendoMobileListView").setDataSource(dataSource);
+    }
+
+    function getData(service) {
+        var url = baseUrl + service
+        var result = {};
+        $.ajax({
+            async: false,
+            type: "POST",
+            url: url,
+            complete: function (jqxhr, txt_status) {
+                result = jqxhr;
+            }
+        });
+
+        if (result.responseText)
+            return result.responseText;
+
+        return "";
+    }
+
+    var viewModel = kendo.observable({
+        username: "",
+        isVisible: "hidden",
+        baserUrl: "https://13.78.183.109:8443/ServicePoc/",
+        login: function (e) {
+            if (this.username != null && this.username != "") {
+                $("#username").attr("readonly", "readonly");
+                $("form").hide();
+                viewModel.set("isVisible", "visible");
+                localStorage.setItem("username", this.username);
+            } else {
+                $("#username").removeAttr("readonly");
+                $("form").show();
+                viewModel.set("isVisible", "hidden");
+            }
+
+            this.initTable();
+        },
+        postData: function (service, data) {
+            var url = this.baserUrl + service
+            var result = {};
+            $.ajax({
+                async: false,
+                type: "POST",
+                url: url,
+                data: JSON.stringify(data),
+                dataType: "application/json",
+                complete: function (jqxhr, txt_status) {
+                    result = jqxhr;
+                }
+            });
+
+            if (result.responseText)
+                return result.responseText;
+
+            return "";
+        },
+        getData: function (service) {
+            var url = this.baserUrl + service
+            var result = {};
+            $.ajax({
+                async: false,
+                type: "POST",
+                url: url,
+                complete: function (jqxhr, txt_status) {
+                    result = jqxhr;
+                }
+            });
+
+            if (result.responseText)
+                return result.responseText;
+
+            return "";
+        },
+        initTable: function () {
+            var data = this.getData("videoConf");
+            if (typeof data == "string") {
+                try {
+                    data = $.parseJSON(data);
+                } catch (e) { console.log(e); }
+            }
+            /*data = [
+                {"RID": 1,"FirstName": "Debra","LastName": "","StoreNumber": 101,"Timestamp": "","Status": "Open","AttendedBy": ""},
+                {"RID": 2,"FirstName": "Lebra","LastName": "","StoreNumber": 101,"Timestamp": "","Status": "Connected","AttendedBy": "Dhana"},
+                {"RID": 3,"FirstName": "Cebra","LastName": "","StoreNumber": 101,"Timestamp": "","Status": "Abandoned","AttendedBy": ""},
+                {"RID": 4,"FirstName": "Debra","LastName": "","StoreNumber": 101,"Timestamp": "","Status": "Closed","AttendedBy": "Dhana"}
+            ] ; */
+
+            var dataSource = new kendo.data.DataSource({
+                data: data,
+                filter: {
+                    logic: "or",
+                    filters: [
+                        { field: "status", operator: "eq", value: "Open" },
+                        { field: "status", operator: "eq", value: "Connected" }
+                    ]
+                },
+                group: { field: "status", dir: "desc" },
+                sort: { field: "timestamp", dir: "desc" }
+            });
+
+            $("#custom-listview").kendoMobileListView({
+                dataSource: dataSource,
+                template: $("#customListViewTemplate").html()
+            });
+        },
+        refresh: function () {
+            reload();
+        }
+    });
+</script>
+
+
+<script>
+    var app = new kendo.mobile.Application(document.body, { skin: "nova" });
+</script>
+
+</html>
